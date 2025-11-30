@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | FoodBridge</title>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">Food<span>Bridge</span></div>
+    <ul class="nav-links">
+      <li class="active"><a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li class="donation-tab"><a href="donation.html"><i class="fas fa-hand-holding-heart"></i> Donations</a></li>
+      <li class="matches-tab"><a href="matches.html"><i class="fas fa-link"></i> Matches</a></li>
+      <li class="alert-menu"><a href="alerts.html"><i class="fas fa-bell"></i> Alerts <span id="alertDot" class="alert-dot"></span></a></li>
+      <li><a href="reports.html"><i class="fas fa-file-alt"></i> Reports</a></li>
+      <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar glass">
+      <h2>Welcome back, <span id="username">User</span></h2>
+    </header>
+
+    <section class="dashboard">
+      <div class="cards">
+        <div class="card glass"><i class="fas fa-drumstick-bite card-icon"></i><h3 id="totalDonations">0</h3><p>Total Donations</p></div>
+        <div class="card glass"><i class="fas fa-clock card-icon"></i><h3 id="pendingDonations">0</h3><p>Pending</p></div>
+        <div class="card glass"><i class="fas fa-check-circle card-icon"></i><h3 id="completedDonations">0</h3><p>Completed</p></div>
+        <div class="card glass"><i class="fas fa-users card-icon"></i><h3 id="activePartners">0</h3><p>Partners</p></div>
+      </div>
+
+      <div class="chart-section glass">
+        <h3><i class="fas fa-chart-bar"></i> Weekly Donation Trends</h3>
+        <canvas id="donationChart"></canvas>
+      </div>
+
+      <div class="grid">
+        <div class="glass activity"><h3><i class="fas fa-bolt"></i> Recent Activity</h3><ul id="recentActivity"><li>Loading...</li></ul></div>
+        <div class="glass notifications"><h3><i class="fas fa-bell"></i> Recent Alerts</h3><ul id="alertList"><li>Loading...</li></ul></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) window.location.href = "login.html";
+    else document.getElementById("username").innerText = user.name;
+
+    // ✅ Hide tabs based on role
+    document.addEventListener("DOMContentLoaded", () => {
+      if (!user) return;
+      const donationTab = document.querySelector(".donation-tab");
+      const matchesTab = document.querySelector(".matches-tab");
+      if (user.role === "ngo" && donationTab) donationTab.style.display = "none";
+      if (user.role === "restaurant" && matchesTab) matchesTab.style.display = "none";
+    });
+
+    function logout() {
+      localStorage.removeItem("user");
+      window.location.href = "login.html";
+    }
+
+    // ✅ Load dashboard data
+    async function loadDashboard() {
+      try {
+        const res = await fetch("/api/donations");
+        const data = await res.json();
+        if (!res.ok) throw new Error("Error");
+
+        document.getElementById("totalDonations").textContent = data.length;
+        document.getElementById("pendingDonations").textContent = data.filter(d=>d.status==="pending").length;
+        document.getElementById("completedDonations").textContent = data.filter(d=>d.status==="completed").length;
+        document.getElementById("activePartners").textContent = Math.max(1, Math.floor(data.length/5));
+
+        document.getElementById("recentActivity").innerHTML = data.slice(-5).reverse().map(
+          d => `<li><i class="fas fa-utensils"></i> ${d.restaurant} donated <b>${d.food_type}</b></li>`
+        ).join("");
+
+        const alertRes = await fetch("/api/alerts");
+        const alerts = await alertRes.json();
+        document.getElementById("alertList").innerHTML = alerts.slice(0,5).map(
+          a => `<li><i class="fas fa-info-circle"></i> ${a.message}</li>`
+        ).join("");
+
+        renderChart();
+      } catch(e){console.error(e);}
+    }
+
+    function renderChart(){
+      const ctx=document.getElementById("donationChart");
+      new Chart(ctx,{type:"line",data:{
+        labels:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+        datasets:[{data:[2,4,5,7,3,6,8],borderColor:"#00fff5",fill:true,backgroundColor:"rgba(0,255,245,0.1)"}]
+      },options:{plugins:{legend:{display:false}}}});
+    }
+    document.addEventListener("DOMContentLoaded",loadDashboard);
+  </script>
+</body>
+</html>

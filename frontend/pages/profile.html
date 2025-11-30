@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - FoodBridge</title>
+  <link rel="stylesheet" href="../css/profile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">Food<span>Bridge</span></div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      <li class="active"><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li class="donation-tab"><a href="donation.html"><i class="fas fa-hand-holding-heart"></i> Donations</a></li>
+      <li class="matches-tab"><a href="matches.html"><i class="fas fa-link"></i> Matches</a></li>
+      <li><a href="alerts.html"><i class="fas fa-bell"></i> Alerts</a></li>
+      <li><a href="reports.html"><i class="fas fa-file-alt"></i> Reports</a></li>
+      <li><a href="login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="header glass"><h2>My Profile</h2></header>
+
+    <section class="profile-card glass">
+      <div class="profile-pic">
+        <img id="profileImage" src="../img/default-avatar.png" alt="User" />
+        <input type="file" id="imageUpload" accept="image/*" hidden />
+        <button id="changeImageBtn" class="btn-secondary"><i class="fas fa-camera"></i> Change Photo</button>
+      </div>
+
+      <div class="profile-info">
+        <h3 id="profileName">Loading...</h3>
+        <p>Email: <span id="profileEmail">Loading...</span></p>
+        <p>Role: <span id="profileRole">Loading...</span></p>
+      </div>
+    </section>
+
+    <section class="profile-details glass">
+      <h3>Account Information</h3>
+      <form id="profileForm">
+        <div class="form-group"><label>Full Name</label><input type="text" id="name" disabled></div>
+        <div class="form-group"><label>Email</label><input type="email" id="email" disabled></div>
+        <div class="form-group"><label>Phone</label><input type="text" id="phone" placeholder="Enter phone"></div>
+        <div class="form-group"><label>Address</label><input type="text" id="address" placeholder="Enter address"></div>
+        <button type="submit" class="btn-primary">Update Profile</button>
+      </form>
+    </section>
+
+    <footer class="footer"><p>© 2025 FoodBridge. All Rights Reserved.</p></footer>
+  </main>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) window.location.href = "login.html";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const donationTab = document.querySelector(".donation-tab");
+      const matchesTab = document.querySelector(".matches-tab");
+      if (user.role === "ngo" && donationTab) donationTab.style.display = "none";
+      if (user.role === "restaurant" && matchesTab) matchesTab.style.display = "none";
+
+      // Load user info
+      document.getElementById("profileName").textContent = user.name;
+      document.getElementById("profileEmail").textContent = user.email;
+      document.getElementById("profileRole").textContent = user.role;
+      document.getElementById("name").value = user.name;
+      document.getElementById("email").value = user.email;
+
+      // Load saved image if exists
+      const savedImage = localStorage.getItem(`profileImage_${user.email}`);
+      if (savedImage) document.getElementById("profileImage").src = savedImage;
+    });
+
+    // ✅ Handle Image Upload
+    document.getElementById("changeImageBtn").addEventListener("click", () => {
+      document.getElementById("imageUpload").click();
+    });
+
+    document.getElementById("imageUpload").addEventListener("change", function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById("profileImage").src = e.target.result;
+          localStorage.setItem(`profileImage_${user.email}`, e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // ✅ Update profile form
+    document.getElementById("profileForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const phone = document.getElementById("phone").value.trim();
+      const address = document.getElementById("address").value.trim();
+      localStorage.setItem(`profileData_${user.email}`, JSON.stringify({ phone, address }));
+      alert("✅ Profile updated successfully!");
+    });
+  </script>
+</body>
+</html>

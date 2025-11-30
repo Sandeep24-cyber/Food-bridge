@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports - FoodBridge</title>
+  <link rel="stylesheet" href="../css/reports.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">Food<span>Bridge</span></div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li class="donation-tab"><a href="donation.html"><i class="fas fa-hand-holding-heart"></i> Donations</a></li>
+      <li class="matches-tab"><a href="matches.html"><i class="fas fa-link"></i> Matches</a></li>
+      <li><a href="alerts.html"><i class="fas fa-bell"></i> Alerts</a></li>
+      <li class="active"><a href="reports.html"><i class="fas fa-file-alt"></i> Reports</a></li>
+      <li><a href="login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="header glass">
+      <h2><i class="fas fa-chart-bar"></i> Donation Reports</h2>
+    </header>
+
+    <!-- Stats Summary -->
+    <section class="reports-grid">
+      <div class="report-card glass"><i class="fas fa-box"></i><h3 id="totalDonations">0</h3><p>Total Donations</p></div>
+      <div class="report-card glass"><i class="fas fa-check-circle"></i><h3 id="completedDonations">0</h3><p>Completed</p></div>
+      <div class="report-card glass"><i class="fas fa-clock"></i><h3 id="pendingDonations">0</h3><p>Pending</p></div>
+      <div class="report-card glass"><i class="fas fa-leaf"></i><h3 id="foodSaved">0 kg</h3><p>Food Saved</p></div>
+    </section>
+
+    <!-- Donation History -->
+    <section class="history-section glass">
+      <h3><i class="fas fa-history"></i> Donation History</h3>
+      <table class="history-table" id="historyTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Restaurant</th>
+            <th>Food Type</th>
+            <th>Quantity</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="7" class="loading">Loading donation history...</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="footer glass"><p>&copy; 2025 FoodBridge. Every meal matters.</p></footer>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user) return (window.location.href = "login.html");
+
+      // Role-based sidebar visibility
+      const donationTab = document.querySelector(".donation-tab");
+      const matchesTab = document.querySelector(".matches-tab");
+      if (user.role === "ngo" && donationTab) donationTab.style.display = "none";
+      if (user.role === "restaurant" && matchesTab) matchesTab.style.display = "none";
+
+      await loadReports(user);
+    });
+
+    async function loadReports(user) {
+      const tBody = document.querySelector("#historyTable tbody");
+      try {
+        const res = await fetch("/api/donations");
+        const data = await res.json();
+        if (!res.ok) throw new Error("Failed to load donations");
+
+        console.log("Fetched donations:", data);
+        console.log("Current user:", user);
+
+        // ✅ Role-based filtering
+        let filtered = [];
+        if (user.role === "restaurant") {
+          filtered = data.filter(d => Number(d.user_id) === Number(user.id));
+        } else if (user.role === "ngo") {
+          filtered = data.filter(d =>
+            d.accepted_by?.toLowerCase().trim() === user.name?.toLowerCase().trim()
+          );
+        }
+
+        const total = filtered.length;
+        const completed = filtered.filter(d => d.status === "completed").length;
+        const pending = filtered.filter(d => d.status === "pending").length;
+        const foodSaved = completed * 5; // Example metric
+
+        document.getElementById("totalDonations").textContent = total;
+        document.getElementById("completedDonations").textContent = completed;
+        document.getElementById("pendingDonations").textContent = pending;
+        document.getElementById("foodSaved").textContent = `${foodSaved} kg`;
+
+        if (filtered.length === 0) {
+          tBody.innerHTML = `<tr><td colspan="7" class="no-data">No donations available for your account.</td></tr>`;
+          return;
+        }
+
+        tBody.innerHTML = filtered.map((d, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${d.restaurant || "N/A"}</td>
+            <td>${d.food_type}</td>
+            <td>${d.quantity}</td>
+            <td>${d.location}</td>
+            <td><span class="status-badge ${d.status}">${d.status}</span></td>
+            <td>${new Date(d.created_at).toLocaleString()}</td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        console.error("Error loading reports:", err);
+        tBody.innerHTML = `<tr><td colspan="7" class="error">Error loading reports.</td></tr>`;
+      }
+    }
+  </script>
+</body>
+</html>

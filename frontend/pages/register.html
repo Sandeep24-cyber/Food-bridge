@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | FoodBridge</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">🍴Food<span>Bridge</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="login.html">Login</a></li>
+      <li><a href="register.html" class="active">Register</a></li>
+    </ul>
+  </nav>
+
+  <!-- Register Container -->
+  <section class="register-container">
+    <div class="register-card glass">
+      <h2>Create Account</h2>
+      <p class="register-subtitle">Join FoodBridge and help end food waste</p>
+
+      <form id="registerForm" class="register-form">
+  <div class="register-input-group">
+    <i class="fas fa-user"></i>
+    <input type="text" id="fullname" placeholder="Full Name" required>
+  </div>
+
+  <div class="register-input-group">
+    <i class="fas fa-envelope"></i>
+    <input type="email" id="email" placeholder="Email Address" required>
+  </div>
+
+  <div class="register-input-group">
+    <i class="fas fa-lock"></i>
+    <input type="password" id="password" placeholder="Password" required>
+  </div>
+
+  <div class="register-input-group">
+    <i class="fas fa-lock"></i>
+    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+  </div>
+
+  <div class="register-input-group">
+    <i class="fas fa-users"></i>
+    <select id="role" required>
+      <option value="" disabled selected>Select Role</option>
+      <option value="restaurant">Restaurant</option>
+      <option value="ngo">NGO</option>
+    </select>
+  </div>
+
+  <button type="submit" class="btn-primary">Register</button>
+  <a href="login.html" class="btn-secondary">← Back to Login</a>
+</form>
+
+
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2025 FoodBridge. All Rights Reserved.</p>
+  </footer>
+  <script src="../js/main.js"></script>
+</body>
+</html>

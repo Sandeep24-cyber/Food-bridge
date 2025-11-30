@@ -1,0 +1,208 @@
+/* =====================================================
+   🌐 ALERTS PAGE STYLING - FoodBridge
+   ===================================================== */
+
+/* ===== Global Styles ===== */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: #fff;
+  display: flex;
+}
+
+/* ===== Sidebar (Consistent with other pages) ===== */
+.sidebar {
+  width: 240px;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+}
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: #00fff5;
+}
+.logo span {
+  color: #ff00c3;
+}
+.nav-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.nav-links li {
+  margin: 15px 0;
+}
+.nav-links a {
+  text-decoration: none;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: 0.3s;
+}
+.nav-links a:hover,
+.nav-links .active a {
+  background: rgba(0, 255, 245, 0.2);
+  color: #00fff5;
+}
+
+/* ===== Main Content ===== */
+.main-content {
+  margin-left: 285px;
+  padding: 2rem;
+  width: calc(100% - 270px);
+}
+
+/* ===== Header ===== */
+.header {
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.header h2 {
+  font-size: 1.8rem;
+  color: cyan;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== Glass Effect ===== */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+/* ===== Alerts Container ===== */
+.alerts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+/* 🔴 Notification Dot on Sidebar */
+.alert-dot {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  width: 10px;
+  height: 10px;
+  background-color: #ff3b3b;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 0, 0, 0.8);
+  animation: pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.alert-menu {
+  position: relative;
+}
+/* ===== Clear Alerts Button ===== */
+.clear-btn {
+  background: linear-gradient(90deg, #00c3ff, #00ff88);
+  border: none;
+  color: #0f2027;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  float: right;
+  margin-top: -42px;
+  transition: all 0.3s ease;
+}
+
+.clear-btn i {
+  margin-right: 6px;
+}
+
+.clear-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(0, 255, 245, 0.6);
+}
+
+/* ===== Fade-out Animation for Alerts ===== */
+.fade-out {
+  animation: fadeOut 0.6s ease forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+/* ===== Alert Cards ===== */
+.alert-card {
+  display: flex;
+  gap: 15px;
+  padding: 1rem 1.5rem;
+  align-items: center;
+  transition: 0.3s;
+  border-left: 5px solid cyan;
+}
+
+.alert-card:hover {
+  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.alert-card i {
+  font-size: 1.5rem;
+}
+
+.alert-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.alert-card p {
+  margin: 0.3rem 0 0 0;
+  color: #ccc;
+  font-size: 0.95rem;
+}
+
+/* ===== Alert Types ===== */
+.alert-card.urgent {
+  border-left: 5px solid #ff4444;
+}
+.alert-card.info {
+  border-left: 5px solid #00c3ff;
+}
+.alert-card.success {
+  border-left: 5px solid #00ff88;
+}
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center;
+  padding: 1rem;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: #ccc;
+}

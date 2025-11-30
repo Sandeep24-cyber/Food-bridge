@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerts - FoodBridge</title>
+  <link rel="stylesheet" href="../css/alerts.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">Food<span>Bridge</span></div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li class="donation-tab"><a href="donation.html"><i class="fas fa-hand-holding-heart"></i> Donations</a></li>
+      <li class="matches-tab"><a href="matches.html"><i class="fas fa-link"></i> Matches</a></li>
+      <li class="active alert-menu"><a href="alerts.html"><i class="fas fa-bell"></i> Alerts <span id="alertDot" class="alert-dot"></span></a></li>
+      <li><a href="reports.html"><i class="fas fa-file-alt"></i> Reports</a></li>
+      <li><a href="login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <main class="main-content">
+    <header class="header glass">
+      <h2><i class="fas fa-bell"></i> Active Alerts</h2>
+      <button id="clearAlertsBtn" class="clear-btn"><i class="fas fa-trash-alt"></i> Clear All</button>
+    </header>
+    <section id="alertsContainer" class="alerts-container"><p>Loading...</p></section>
+    <footer class="footer glass"><p>&copy; 2025 FoodBridge.</p></footer>
+  </main>
+
+  <script>
+    const user=JSON.parse(localStorage.getItem("user"));
+    if(!user)window.location.href="login.html";
+    document.addEventListener("DOMContentLoaded",()=>{
+      const donationTab=document.querySelector(".donation-tab");
+      const matchesTab=document.querySelector(".matches-tab");
+      if(user.role==="ngo")donationTab.style.display="none";
+      if(user.role==="restaurant")matchesTab.style.display="none";
+      loadAlerts(); markAlertsRead();
+    });
+
+    async function loadAlerts(){
+      const c=document.getElementById("alertsContainer");
+      try{
+        const r=await fetch("/api/alerts");const alerts=await r.json();
+        if(!r.ok)throw new Error();
+        c.innerHTML=alerts.length?alerts.map(a=>
+          `<div class="alert-card glass ${a.type}">
+            <i class="fas fa-info-circle"></i>
+            <div><p>${a.message}</p><small>${new Date(a.created_at).toLocaleString()}</small></div>
+          </div>`).join(""):`<p>No alerts found.</p>`;
+      }catch(e){c.innerHTML="<p>Error loading alerts</p>";}
+    }
+
+    async function markAlertsRead(){await fetch("/api/alerts/mark-read",{method:"PUT"});}
+    document.getElementById("clearAlertsBtn").onclick=()=>fetch("/api/alerts/clear",{method:"DELETE"}).then(()=>loadAlerts());
+  </script>
+</body>
+</html>

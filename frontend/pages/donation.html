@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donations - FoodBridge</title>
+  <link rel="stylesheet" href="../css/donation.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">Food<span>Bridge</span></div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li class="active donation-tab"><a href="donation.html"><i class="fas fa-hand-holding-heart"></i> Donations</a></li>
+      <li class="matches-tab"><a href="matches.html"><i class="fas fa-link"></i> Matches</a></li>
+      <li class="alert-menu">
+        <a href="alerts.html"><i class="fas fa-bell"></i> Alerts <span id="alertDot" class="alert-dot"></span></a>
+      </li>
+      <li><a href="reports.html"><i class="fas fa-file-alt"></i> Reports</a></li>
+      <li><a href="login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="header glass">
+      <h2><i class="fas fa-hand-holding-heart"></i> Add Food Donation</h2>
+    </header>
+
+    <section class="donation-container">
+      <!-- Donation Form -->
+      <div class="donation-form glass">
+        <h3>Add Donation</h3>
+        <form id="donationForm">
+          <div class="form-group restaurant-field">
+            <label for="restaurant">Restaurant Name</label>
+            <input type="text" id="restaurant" placeholder="Enter your restaurant name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="foodType">Food Type</label>
+            <input type="text" id="foodType" placeholder="E.g., Rice, Sandwiches, Salad" required />
+          </div>
+
+          <div class="form-group">
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity" placeholder="Number of meals" required />
+          </div>
+
+          <div class="form-group">
+            <label for="expiry">Best Before</label>
+            <input type="datetime-local" id="expiry" required />
+          </div>
+
+          <div class="form-group">
+            <label for="location">Pickup Location</label>
+            <input type="text" id="location" placeholder="Search or click map to select location" required />
+          </div>
+
+          <button type="submit" class="btn">Submit Donation</button>
+        </form>
+      </div>
+
+      <!-- Google Map -->
+      <div class="donation-map glass">
+        <h3><i class="fas fa-map-marker-alt"></i> Pickup Location</h3>
+        <div id="map"></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>&copy; 2025 FoodBridge. Connecting surplus food with those in need.</p>
+    </footer>
+  </main>
+
+  <script>
+    let map, marker, autocomplete, selectedLatLng = null;
+
+    // ✅ Initialize Map
+    function initMap() {
+      const defaultLoc = { lat: 12.9716, lng: 77.5946 }; // Bangalore
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: defaultLoc,
+        zoom: 13,
+      });
+
+      marker = new google.maps.Marker({
+        position: defaultLoc,
+        map: map,
+      });
+
+      const locationInput = document.getElementById("location");
+      autocomplete = new google.maps.places.Autocomplete(locationInput);
+      autocomplete.bindTo("bounds", map);
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) {
+          alert("Please select a valid location from the dropdown.");
+          return;
+        }
+        selectedLatLng = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        };
+        map.setCenter(selectedLatLng);
+        map.setZoom(15);
+        marker.setPosition(selectedLatLng);
+      });
+
+      // Click to set location manually
+      map.addListener("click", (e) => {
+        selectedLatLng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+        marker.setPosition(selectedLatLng);
+        document.getElementById("location").value = `${selectedLatLng.lat.toFixed(5)}, ${selectedLatLng.lng.toFixed(5)}`;
+      });
+    }
+
+    // ✅ DOM Loaded
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user) return (window.location.href = "login.html");
+
+      // Role-based visibility
+      const donationTab = document.querySelector(".donation-tab");
+      const matchesTab = document.querySelector(".matches-tab");
+
+      if (user.role === "ngo") {
+        if (donationTab) donationTab.style.display = "none";
+        alert("NGO users cannot submit donations.");
+        window.location.href = "dashboard.html";
+      } else if (user.role === "restaurant") {
+        if (matchesTab) matchesTab.style.display = "none";
+      }
+
+      // ✅ Handle Form Submission
+      document.getElementById("donationForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        if (user.role !== "restaurant") {
+          alert("Only restaurant users can submit donations.");
+          return;
+        }
+
+        const restaurant = document.getElementById("restaurant").value.trim();
+        const foodType = document.getElementById("foodType").value.trim();
+        const quantity = document.getElementById("quantity").value.trim();
+        const expiry = document.getElementById("expiry").value;
+        const location = document.getElementById("location").value.trim();
+
+        if (!restaurant || !foodType || !quantity || !expiry || !location) {
+          return alert("Please fill in all fields before submitting.");
+        }
+
+        if (!selectedLatLng) {
+          return alert("Please select a pickup location from the map or autocomplete.");
+        }
+
+        const donationData = {
+          restaurant,
+          user_id: user.id,
+          foodType,
+          quantity,
+          expiry,
+          location,
+          latitude: selectedLatLng.lat,
+          longitude: selectedLatLng.lng,
+        };
+
+        try {
+          const res = await fetch("/api/donations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(donationData),
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            alert("✅ Donation submitted successfully!");
+            document.getElementById("donationForm").reset();
+            selectedLatLng = null;
+          } else {
+            alert("❌ " + data.message);
+          }
+        } catch (err) {
+          console.error("Error:", err);
+          alert("⚠️ Server error while adding donation.");
+        }
+      });
+    });
+  </script>
+
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmbq0C7y4KwvBbcex2AyDGjwhebNewitk&libraries=places&callback=initMap"
+    async defer>
+  </script>
+</body>
+</html>

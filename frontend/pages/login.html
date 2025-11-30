@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food Bridge | Login</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="logo">🍴 Food<span>Bridge</span></div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="login.html" class="active">Login</a></li>
+        <li><a href="register.html">Register</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Login Section -->
+  <section class="auth-container">
+    <div class="auth-card glass">
+      <h2>Welcome Back</h2>
+      <p class="auth-subtitle">Login to continue your journey with Food Bridge</p>
+      
+      <form id="loginForm" class="login-form">
+        <!-- Email -->
+        <div class="input-group">
+          <i class="fa-solid fa-envelope"></i>
+          <input type="email" id="email" placeholder="Email Address" required>
+        </div>
+
+        <!-- Password -->
+        <div class="input-group">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" id="password" placeholder="Password" required>
+        </div>
+
+        <!-- Role Selection -->
+        <div class="input-group">
+          <i class="fa-solid fa-user-tag"></i>
+          <select id="role" required>
+            <option value="" disabled selected>Select Role</option>
+            <option value="restaurant">Restaurant</option>
+            <option value="ngo">NGO</option>
+          </select>
+        </div>
+
+        <!-- Buttons -->
+        <button type="submit" class="btn-primary">Login</button>
+        <a href="index.html" class="btn-secondary back-btn">← Back to Home</a>
+      </form>
+    </div>
+  </section>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

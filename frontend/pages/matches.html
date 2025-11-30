@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matches - FoodBridge</title>
+  <link rel="stylesheet" href="../css/matches.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">Food<span>Bridge</span></div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li class="donation-tab"><a href="donation.html"><i class="fas fa-hand-holding-heart"></i> Donations</a></li>
+      <li class="active"><a href="matches.html"><i class="fas fa-link"></i> Matches</a></li>
+      <li class="alert-menu">
+        <a href="alerts.html">
+          <i class="fas fa-bell"></i> Alerts <span id="alertDot" class="alert-dot"></span>
+        </a>
+      </li>
+      <li><a href="reports.html"><i class="fas fa-file-alt"></i> Reports</a></li>
+      <li><a href="login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="header glass">
+      <h2 id="pageTitle"><i class="fas fa-link"></i> Available Donations</h2>
+    </header>
+
+    <section class="matches-container" id="matchesContainer">
+      <p class="loading-text">Loading donations...</p>
+    </section>
+
+    <footer class="footer glass">
+      <p>&copy; 2025 FoodBridge. Connecting surplus food with those in need.</p>
+    </footer>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user) return (window.location.href = "login.html");
+
+      // Hide Donations tab for NGO
+      if (user.role === "ngo") {
+        const donationTab = document.querySelector(".donation-tab");
+        if (donationTab) donationTab.style.display = "none";
+      }
+
+      const container = document.getElementById("matchesContainer");
+      const pageTitle = document.getElementById("pageTitle");
+      container.innerHTML = `<p class="loading-text">Loading donations...</p>`;
+
+      try {
+        const res = await fetch("/api/donations");
+        const donations = await res.json();
+        if (!res.ok) throw new Error("Failed to fetch donations.");
+        container.innerHTML = "";
+
+        // NGO view
+        if (user.role === "ngo") {
+          pageTitle.innerHTML = `<i class="fas fa-link"></i> Available Donations`;
+          const available = donations.filter(d => d.status === "pending");
+
+          if (available.length === 0) {
+            container.innerHTML = `<p class="no-data">No available donations at the moment.</p>`;
+            return;
+          }
+
+          available.forEach(d => {
+            const div = document.createElement("div");
+            div.className = "match-card glass";
+            div.innerHTML = `
+              <div class="match-header">
+                <i class="fas fa-utensils"></i><h3>${d.restaurant}</h3>
+              </div>
+              <p><b>Food:</b> ${d.food_type}</p>
+              <p><b>Quantity:</b> ${d.quantity} meals</p>
+              <p><b>Pickup Location:</b> ${d.location}</p>
+              <div class="button-group">
+                <button class="btn accept-btn" onclick="showPickupOptions(this, ${d.id}, ${d.latitude}, ${d.longitude})">Accept Donation</button>
+              </div>`;
+            container.appendChild(div);
+          });
+        }
+
+        // Restaurant view
+        else if (user.role === "restaurant") {
+          pageTitle.innerHTML = `<i class="fas fa-hand-holding-heart"></i> Your Donations Overview`;
+          const myDonations = donations.filter(
+            d => d.restaurant && d.restaurant.trim().toLowerCase() === user.name.trim().toLowerCase()
+          );
+
+          if (myDonations.length === 0) {
+            container.innerHTML = `<p class="no-data">No donations found yet.</p>`;
+            return;
+          }
+
+          myDonations.forEach(d => {
+            let statusText = "";
+            if (d.status === "pending") statusText = "🕓 Awaiting NGO pickup";
+            else if (d.status === "matched" || d.status === "accepted")
+              statusText = `📦 Accepted by ${d.accepted_by || "an NGO"}`;
+            else if (d.status === "completed") statusText = "✅ Donation Collected";
+            else statusText = "⏳ Unknown status";
+
+            const div = document.createElement("div");
+            div.className = "match-card glass";
+            div.innerHTML = `
+              <div class="match-header">
+                <i class="fas fa-utensils"></i><h3>${d.food_type}</h3>
+              </div>
+              <p><b>Quantity:</b> ${d.quantity}</p>
+              <p><b>Pickup Location:</b> ${d.location}</p>
+              <p><b>Status:</b> ${statusText}</p>`;
+            container.appendChild(div);
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching matches:", err);
+        container.innerHTML = `<p class="error-text">Server error loading donations.</p>`;
+      }
+    });
+
+    // ✅ Accept donation (NGO only)
+    async function showPickupOptions(button, id, lat, lng) {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || user.role !== "ngo") return alert("Only NGOs can accept donations.");
+
+      try {
+        const res = await fetch(`/api/donations/${id}/accept`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accepted_by: user.name }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+
+        const btnGroup = button.parentElement;
+        btnGroup.innerHTML = `
+          <button class="btn map-btn" onclick="openGoogleMaps(${lat}, ${lng})">Go to Pickup</button>
+          <button class="btn collected-btn" onclick="markCollected(this, ${id})">Donation Collected</button>`;
+        alert("✅ Donation accepted! Proceed to pickup location.");
+      } catch (err) {
+        console.error("Error accepting donation:", err);
+        alert("⚠️ Server error while accepting donation.");
+      }
+    }
+
+    function openGoogleMaps(lat, lng) {
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      window.open(mapsUrl, "_blank");
+    }
+
+    async function markCollected(button, id) {
+      try {
+        const res = await fetch("/api/donations/status", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, status: "completed" }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+
+        const card = button.closest(".match-card");
+        card.querySelector(".button-group").innerHTML = `<p class="closed-text">✅ Donation Collected</p>`;
+        card.style.opacity = "0.7";
+      } catch (err) {
+        console.error("Error marking collected:", err);
+        alert("⚠️ Server error updating donation status.");
+      }
+    }
+  </script>
+</body>
+</html>
